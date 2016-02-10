@@ -1,3 +1,48 @@
+//defines
+#define TIMER_INTERRUPT 1
+#define TERMINATE_INTERRUPT 2
+#define IO_INTERRUPT 3
+#define TIMER_QUANTUM 300
+#define NEW_PROCS_LOWER 3
+#define NEW_PROCS_UPPER 3
+#define PRIORITY_LEVELS 16
+#define ROUNDS_TO_PRINT 4 // the number of rounds to wait before printing simulation data
+#define SIMULATION_END 5000 //the number of instructions to execute before the simulation may end
+#define MIN_PC_INCREMENT 3000
+#define PC_INCREMENT_RANGE 1000
+
+
+//Global variables
+int currPID; //The number of processes created so far. The latest process has this as its ID.
+//int timerCount; //the counter for timer interrupts
+int io1Count; //the counter for I/O 1
+int io2Count; //the counter for I/O 2
+int timerCount;
+unsigned int sysStackPC;
+FifoQueue* newProcesses;
+FifoQueue* readyProcesses;
+FifoQueue* terminatedProcesses;
+FifoQueue* waitQueue1;
+FifoQueue* waitQueue2;
+PcbPtr currProcess;
+FILE* outFilePtr;
+
+//Scheduler
+//switch/case for TERMINATE_INTERRUPT
+case TERMINATE_INTERRUPT :
+		fifoQueueEnqueue(terminatedProcesses, currProcess);
+		PCBSetState(currProcess, terminated);
+		currProcess->TERMINATION = (double)clock();
+		dispatcher();
+		break;
+
+void terminateIsr() {
+	//save cpu to pcb??
+	PCBSetState(currProcess, interrupted);
+	scheduler(TERMINATE_INTERRUPT, -1);
+}
+
+
 
 /* I was assigned a IO_ISR Method. I assume we need it to
  * do something, but I dont know how relevant it is now.
