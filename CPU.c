@@ -29,12 +29,14 @@ FILE* outFilePtr;
 
 //Scheduler
 //switch/case for TERMINATE_INTERRUPT
+/*
 case TERMINATE_INTERRUPT :
 		fifoQueueEnqueue(terminatedProcesses, currProcess);
 		PCBSetState(currProcess, terminated);
 		currProcess->TERMINATION = (double)clock();
 		dispatcher();
 		break;
+*/
 
 void terminateIsr() {
 	//save cpu to pcb??
