@@ -72,6 +72,34 @@ void IO_ISR(int numIO) {
  * PCBSetState(currProcess, running);
  */
 
+/**Makes a new request to device*/
+void IOTrapHandler(struct device* d) {
+	saveCpuToPcb();
+	PCBSetState(currProcess, blocked);
+	fifoQueueEnqueue(d->waitQ, currProcess);
+	setIOTimer(d);
+	scheduler(IO_REQUEST);
+}
+
+//returns 0 if there's no io request, nonzero if request was made.
+int checkIORequest(int devnum) {
+	int requestMade = 0;
+	int i;
+	if (currProcess) {
+		if (devnum == 1) { //look through array 1
+			for (i=0; i < NUM_IO_TRAPS; i++) {
+				requestMade = get_IO_1_Trap(currProcess, i) == sysStackPC? 1: requestMade;
+			}
+		}
+		else if (devnum == 2) { //look through array 2
+			for (i=0; i < NUM_IO_TRAPS; i++) {
+				requestMade = get_IO_2_Trap(currProcess, i) == sysStackPC? 1: requestMade;
+			}
+		}
+	}
+	return requestMade;
+} 
+ 
 int main(void) {
 	srand(time(NULL));
 	outFilePtr = fopen("scheduleTrace.txt", "w");
