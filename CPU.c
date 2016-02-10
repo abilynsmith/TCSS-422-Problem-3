@@ -1,3 +1,30 @@
+
+/* I was assigned a IO_ISR Method. I assume we need it to
+ * do something, but I dont know how relevant it is now.
+ * The interrupt service routine for a IO interrupt
+ * Does it still have to save Cpu state to Pcb? */
+void IO_ISR(int numIO) {
+	saveCpuToPcb();
+	PCBSetState(currProcess, interrupted);
+	//Get process from waiting queue
+	PcbPtr pcb;
+	if (numIO == 1) {
+		pcb = fifoQueueDequeue(wait_queue1);
+	}
+	else if (numIO == 2) {
+		pcb = fifoQueueDequeue(wait_queue2);
+	}
+	//put current process into ready queue
+	fifoQueueEnqueue(readyProcesses, currProcess);
+	PCBSetState(currProcess, ready);
+	//set new io waiting queue process to running
+	currProcess = pcb;
+}
+
+/*TODO:PUT THIS IN SHEDULER - Sean
+ * PCBSetState(currProcess, running);
+ */
+
 int main(void) {
 	srand(time(NULL));
 	outFilePtr = fopen("scheduleTrace.txt", "w");
