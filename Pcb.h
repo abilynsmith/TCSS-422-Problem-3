@@ -57,6 +57,16 @@ void PCBSetState(PcbPtr pcb, State newState);
  */
 void PCBSetPC(PcbPtr pcb, unsigned int newPC);
 
+void PCBSetMaxPC(PcbStr* pcb, unsigned int newMaxPC);
+
+void PCBSetCreation(PcbStr* pcb, unsigned int newCreation);
+
+void PCBSetTermination(PcbStr* pcb, unsigned int newTermination);
+
+void PCBSetTerminate(PcbStr* pcb, unsigned int newTerminate);
+
+void PCBSetTermCount(PcbStr* pcb, unsigned int newTermCount);
+
 /**
  * Returns PC of this PCB.
  */
