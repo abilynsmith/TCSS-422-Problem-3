@@ -8,13 +8,13 @@
 #define TIMER_INTERRUPT 1
 #define TERMINATE_INTERRUPT 2
 #define IO_REQUEST 3
-#define TIMER_QUANTUM 300
+#define TIMER_QUANTUM 500
 //#define NEW_PROCS_LOWER 3
 //#define NEW_PROCS_UPPER 4
-#define NEW_PROCS		10
+#define NEW_PROCS		2
 #define PRIORITY_LEVELS 16
 #define ROUNDS_TO_PRINT 4 // the number of rounds to wait before printing simulation data
-#define SIMULATION_END 5000 //the number of instructions to execute before the simulation may end
+#define SIMULATION_END 10000 //the number of instructions to execute before the simulation may end
 #define MIN_PC_INCREMENT 3000
 #define PC_INCREMENT_RANGE 1000
 
@@ -33,8 +33,6 @@ unsigned int sysStackPC;
 FifoQueue* newProcesses;
 FifoQueue* readyProcesses;
 FifoQueue* terminatedProcesses;
-FifoQueue* wait_queue1;
-FifoQueue* wait_queue2;
 PcbPtr currProcess;
 Device* device1;
 Device* device2;
@@ -55,11 +53,15 @@ void IODeviceDestructor(Device* device) {
 
 /*Prepares the waiting process to be executed.*/
 void dispatcher() {
-	currProcess = fifoQueueDequeue(readyProcesses);
-	PCBSetState(currProcess, running);
-	sysStackPC = PCBGetPC(currProcess);
+	if (readyProcesses->size > 0) {
+		currProcess = fifoQueueDequeue(readyProcesses);
+		PCBSetState(currProcess, running);
+		sysStackPC = PCBGetPC(currProcess);
 
-	printf("PID %d was dispatched\n\n", PCBGetID(currProcess));
+		printf("PID %d was dispatched\n\n", PCBGetID(currProcess));
+	} else {
+		printf("\n\n");
+	}
 }
 
 //Scheduler
@@ -74,8 +76,10 @@ void scheduler(int interruptType) {
 			fifoQueueEnqueue(readyProcesses, pcb);
 			//fprintf(outFilePtr, "%s\r\n", PCBToString(pcb));
 		}
-		fifoQueueEnqueue(readyProcesses, currProcess);
-		PCBSetState(currProcess, ready);
+		if (PCBGetState(currProcess) != blocked) {
+			fifoQueueEnqueue(readyProcesses, currProcess);
+			PCBSetState(currProcess, ready);
+		}
 		dispatcher();
 		break;
 	case TERMINATE_INTERRUPT :
@@ -103,8 +107,10 @@ void saveCpuToPcb() {
 
 /*The interrupt service routine for a timer interrupt.*/
 void timerIsr() {
-	saveCpuToPcb();
-	PCBSetState(currProcess, interrupted);
+	if (PCBGetState(currProcess) != blocked) {
+		saveCpuToPcb();
+		PCBSetState(currProcess, interrupted);
+	}
 	scheduler(TIMER_INTERRUPT);
 }
 
@@ -126,10 +132,10 @@ void IO_ISR(int numIO) {	//IOCompletionHandler
 	//Get process from waiting queue
 	PcbPtr pcb;
 	if (numIO == 1) {
-		pcb = fifoQueueDequeue(wait_queue1);
+		pcb = fifoQueueDequeue(device1->waitQ);
 	}
 	else if (numIO == 2) {
-		pcb = fifoQueueDequeue(wait_queue2);
+		pcb = fifoQueueDequeue(device2->waitQ);
 	}
 	fifoQueueEnqueue(readyProcesses, pcb);
 	//put current process into ready queue
@@ -167,15 +173,15 @@ int setIOTimer(Device* device) {
 int checkIORequest(int devnum) {
 	int requestMade = 0;
 	int i;
-	if (currProcess) {
+	if (PCBGetState(currProcess) != blocked) {
 		if (devnum == 1) { //look through array 1
 			for (i=0; i < NUM_IO_TRAPS; i++) {
-				requestMade = PCBGetIO1Trap(currProcess, i) == sysStackPC? 1: requestMade;
+				requestMade = PCBGetIO1Trap(currProcess, i) == sysStackPC ? 1: requestMade;
 			}
 		}
 		else if (devnum == 2) { //look through array 2
 			for (i=0; i < NUM_IO_TRAPS; i++) {
-				requestMade = PCBGetIO2Trap(currProcess, i) == sysStackPC? 1: requestMade;
+				requestMade = PCBGetIO2Trap(currProcess, i) == sysStackPC ? 1: requestMade;
 			}
 		}
 	}
@@ -238,8 +244,6 @@ int main(void) {
 	newProcesses = fifoQueueConstructor();
 	readyProcesses = fifoQueueConstructor();
 	terminatedProcesses = fifoQueueConstructor();
-	wait_queue1 = fifoQueueConstructor();
-	wait_queue2 = fifoQueueConstructor();
 	device1 = IODeviceConstructor();
 	device2 = IODeviceConstructor();
 
@@ -257,15 +261,6 @@ int main(void) {
 		printf("Process created: %s\n", PCBToString(currProcess));
 	}
 
-	/*
-	currProcess = PCBConstructor();
-	PCBSetPC(currProcess, rand());
-	PCBSetID(currProcess, currPID);
-	PCBSetPriority(currProcess, rand() % PRIORITY_LEVELS);
-	PCBSetState(currProcess, running);
-	currPID++;
-	*/
-
 	//printf("Process created: PID: %d at %lu\n", PCBGetID(currProcess), PCBGetCreation(currProcess));
 
 	genProcesses();
@@ -275,14 +270,14 @@ int main(void) {
 	int simCounter = 0;
 
 	while (simCounter <= SIMULATION_END) {
-
 		//check for timer interrupt, if so, call timerISR()
 		if (timerCheck() == 1) {
-			printf("Timer interrupt: PID %d was running, ", PCBGetID(currProcess));
+			//printf("Timer interrupt: PID %d was running, ", PCBGetID(currProcess));
+			printf("Timer interrupt: PID %d was running at PC %d, ", PCBGetID(currProcess), PCBGetPC(currProcess));
 
 			timerIsr();
 		}
-
+		/*
 		//check if there has been an IO interrupt, if so call appropriate ioISR
 		if (checkIOInterrupt(device1) == 1) {
 			printf("I/O 1 Completion interrupt: PID %d is running, ", PCBGetID(currProcess));
@@ -290,6 +285,7 @@ int main(void) {
 			//call the IO service routine
 			IO_ISR(1);
 		}
+
 		if (checkIOInterrupt(device2) == 1) {
 			printf("I/O 2 Completion interrupt: PID %d is running, ", PCBGetID(currProcess));
 
@@ -309,36 +305,37 @@ int main(void) {
 			}
 			PCBSetPC(currProcess, 0);
 		}
+		*/
 
 		//increment the current process's PC
-		PCBSetPC(currProcess, PCBGetPC(currProcess) + 1);
+		//PCBSetPC(currProcess, PCBGetPC(currProcess) + 1);
+		sysStackPC++;
+		//printf("sysStackPC:%d\n", sysStackPC);
 
 		/*call trapCheck
 		 *if yes, then call the trapHandler*/
-		if (checkIORequest(1)) {
+
+		if (checkIORequest(1) != 0) {
 			printf("I/O trap request: I/O device 1, ");
 			IOTrapHandler(device1);
 		}
 
-		if (checkIORequest(2)) {
+		if (checkIORequest(2) != 0) {
 			printf("I/O trap request: I/O device 2, ");
 			IOTrapHandler(device2);
 		}
+
 		//at end
 		simCounter++;
 	}
 
 	//free all the things!
 	fifoQueueDestructor(&newProcesses);
-	free(newProcesses);
+	//free(newProcesses);
 	fifoQueueDestructor(&readyProcesses);
-	free(readyProcesses);
+	//free(readyProcesses);
 	fifoQueueDestructor(&terminatedProcesses);
-	free(terminatedProcesses);
-	fifoQueueDestructor(&wait_queue1);
-	free(wait_queue1);
-	fifoQueueDestructor(&wait_queue2);
-	free(wait_queue2);
+	//free(terminatedProcesses);
 
 	IODeviceDestructor(device1);
 	IODeviceDestructor(device2);
