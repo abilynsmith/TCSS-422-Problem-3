@@ -57,15 +57,15 @@ void PCBSetState(PcbPtr pcb, State newState);
  */
 void PCBSetPC(PcbPtr pcb, unsigned int newPC);
 
-void PCBSetMaxPC(PcbStr* pcb, unsigned int newMaxPC);
+void PCBSetMaxPC(PcbPtr pcb, unsigned int newMaxPC);
 
-void PCBSetCreation(PcbStr* pcb, unsigned int newCreation);
+void PCBSetCreation(PcbPtr pcb, unsigned int newCreation);
 
-void PCBSetTermination(PcbStr* pcb, unsigned int newTermination);
+void PCBSetTermination(PcbPtr pcb, unsigned int newTermination);
 
-void PCBSetTerminate(PcbStr* pcb, unsigned int newTerminate);
+void PCBSetTerminate(PcbPtr pcb, unsigned int newTerminate);
 
-void PCBSetTermCount(PcbStr* pcb, unsigned int newTermCount);
+void PCBSetTermCount(PcbPtr pcb, unsigned int newTermCount);
 
 /**
  * Returns PC of this PCB.
@@ -87,15 +87,15 @@ int PCBGetID(PcbPtr pcb);
  */
 State PCBGetState(PcbPtr pcb);
 
-unsigned int PCBGetMaxPC(PcbStr* pcb);
+unsigned int PCBGetMaxPC(PcbPtr pcb);
 
-unsigned int PCBGetCreation(PcbStr* pcb);
+unsigned int PCBGetCreation(PcbPtr pcb);
 
-unsigned long PCBGetTermination(PcbStr* pcb);
+unsigned long PCBGetTermination(PcbPtr pcb);
 
-unsigned int PCBGetTerminate(PcbStr* pcb);
+unsigned int PCBGetTerminate(PcbPtr pcb);
 
-unsigned int PCBGetTermCount(PcbStr* pcb);
+unsigned int PCBGetTermCount(PcbPtr pcb);
 
 PcbPtr PCBConstructor();
 

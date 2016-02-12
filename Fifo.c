@@ -83,7 +83,7 @@ void fifoQueueDestructor(FifoQueue ** queue_p) {
 
 }
 
-void fifoQueueEnqueue(FifoQueue *queue, PcbStr* pcb) {
+void fifoQueueEnqueue(FifoQueue *queue, PcbPtr pcb) {
 	if (pcb == NULL) {
 		printf("pcb is null");
 		return;
@@ -118,7 +118,7 @@ PcbPtr fifoQueueDequeue(FifoQueue *queue) {
 
 	Node * toDestroy = queue->head;
 	queue->head = queue->head->next; //Sets head to null when head points to the last Node
-	PcbStr * ret = nodeDestructor(&toDestroy);
+	PcbPtr ret = nodeDestructor(&toDestroy);
 	(queue->size)--;
 	return ret;
 }
@@ -154,7 +154,7 @@ char * fifoQueueToString(FifoQueue * queue) {
 	Node *front = queue->head;
 	for (i = 1; i <= queue->size; i++) {
 		char s[5] = "P";
-		int j = front->content->ID;
+		int j = PCBGetID(front->content);
 		int numWritten = sprintf(s + 1, "%d", j);
 		s[numWritten + 1] = '-';
 		strncat(string, s, 5);

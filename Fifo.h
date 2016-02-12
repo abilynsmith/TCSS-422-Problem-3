@@ -24,7 +24,7 @@
  * and contains a next pointer to the next node.
  */
 typedef struct node {
-	PcbStr * content;
+	PcbPtr content;
 	struct node * next;
 } Node;
 
@@ -66,7 +66,7 @@ void fifoQueueDestructor(FifoQueue ** queue);
 /**
  * Pass in the queue and a pointer of the PcbStr to enqueue
  */
-void fifoQueueEnqueue(FifoQueue *queue, PcbStr * pcb);
+void fifoQueueEnqueue(FifoQueue *queue, PcbPtr pcb);
 
 /**
  * Pass in a queue. Returns and dequeues the head PcbStr.
@@ -76,7 +76,7 @@ PcbPtr fifoQueueDequeue(FifoQueue *queue);
 /**
  * Returns a pointer to the head PcbStr
  */
-PcbStr *fifoQueuePeek(FifoQueue * queue);
+PcbPtr fifoQueuePeek(FifoQueue * queue);
 
 /**
  * Is it Empty?
