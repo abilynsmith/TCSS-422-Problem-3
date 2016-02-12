@@ -99,6 +99,26 @@ State PCBGetState(PcbStr* pcb) {
 	return pcb->state;
 }
 
+unsigned int PCBGetMaxPC(PcbStr* pcb) {
+	return pcb->maxPC;
+}
+
+unsigned int PCBGetCreation(PcbStr* pcb) {
+	return pcb->creation;
+}
+
+unsigned long PCBGetTermination(PcbStr* pcb) {
+	return pcb->termination;
+}
+
+unsigned int PCBGetTerminate(PcbStr* pcb) {
+	return pcb->terminate;
+}
+
+unsigned int PCBGetTermCount(PcbStr* pcb) {
+	return pcb->term_count;
+}
+
 /**Generates a value greater or equal to min and less or equal to max*/
 int genLarger(int min, int max) {
 	//srand(time(NULL));
