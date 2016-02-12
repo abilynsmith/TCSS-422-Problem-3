@@ -77,6 +77,16 @@ int PCBGetID(PcbPtr pcb);
  */
 State PCBGetState(PcbPtr pcb);
 
+unsigned int PCBGetMaxPC(PcbStr* pcb);
+
+unsigned int PCBGetCreation(PcbStr* pcb);
+
+unsigned long PCBGetTermination(PcbStr* pcb);
+
+unsigned int PCBGetTerminate(PcbStr* pcb);
+
+unsigned int PCBGetTermCount(PcbStr* pcb);
+
 PcbPtr PCBConstructor();
 
 /**
