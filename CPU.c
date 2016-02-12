@@ -142,13 +142,28 @@ void IO_ISR(int numIO) { //IOCompletionHandler
  * PCBSetState(currProcess, running);
  */
 
+/*And this is the method that I (Abby) have implemented in my project. 
+It may not be completely right, but it lets the program run, so there's that.*/
 /*Returns 0 if there is no interrupt; 1 otherwise.*/
+int checkIOInterrupt(Device* device) {
+	if (device->counter > 0) { //still counting down
+		device->counter--;
+		return 0;
+	} else if (device->counter == 0) {	//we've reached the end of the waiting time, throw interrupt
+		device->counter = -1;
+		return 1;
+	} else {	//this IO device hasn't been activated yet
+		return 0;
+	}
+}
+
+/*
 int checkIOInterrupt(Device* d) {
 	int interrupt = 0;
 //TODO check if pc of head of d.waitQ equals sysstack pc
 	return interrupt;
 }
-
+*/
 
 /**Makes a new request to device*/
 void IOTrapHandler(Device* d) {
@@ -178,17 +193,32 @@ int checkIORequest(int devnum) {
 	return requestMade;
 } 
 
+/*The interrupt service routine for a timer interrupt.*/
 void timerIsr() {
-//TODO
+	saveCpuToPcb();
+	PCBSetState(currProcess, interrupted);
+	scheduler(TIMER_INTERRUPT);
 }
 
+/*Here's the timer check that I (Abby) implemented.
+  It may no be completely right, but it gets the program running.*/
+int timerCheck() {
+	if (timerCount > 0) {
+		timerCount--;
+		return 0;
+	} else {
+		timerCount = TIMER_QUANTUM;
+		return 1;
+	}
+}
 /*Returns 1 if there should be a timer interrupt; 0 otherwise.*/
+/*
 int timerCheck() {
 	int timerWentOff = 0;
 //TODO determine if timer should go off
 	return timerWentOff;
 }
-
+*/
  
 int main(void) {
 	srand(time(NULL));
@@ -294,33 +324,6 @@ int main(void) {
 			printf("waitQueue2 current state: %s\n", fifoQueueToString(device2.waitQ));
 			printf("Currently running process: %s\n\n", PCBToString(currProcess));
 		}
-
-/*********The following is replaced by the above calls to checkIORequest -Tabi*************/
-		//check the current process's PC to see if it's an I/O, if so, call ioISR on appropriate I/O device
-//		if (currProcess->PC == currProcess->IO_1_TRAPS[0] ||
-//				currProcess->PC == currProcess->IO_1_TRAPS[1] ||
-//				currProcess->PC == currProcess->IO_1_TRAPS[2] ||
-//				currProcess->PC == currProcess->IO_1_TRAPS[3]) {
-//
-//			printf("I/O 1 request\n");
-//
-//			trapServiceHandler(1);
-//
-//			printf("waitQueue1 current state: %s\n", fifoQueueToString(waitQueue1));
-//			printf("Currently running process: %s\n\n", PCBToString(currProcess));
-//		} else if (currProcess->PC == currProcess->IO_2_TRAPS[0] ||
-//				currProcess->PC == currProcess->IO_2_TRAPS[1] ||
-//				currProcess->PC == currProcess->IO_2_TRAPS[2] ||
-//				currProcess->PC == currProcess->IO_2_TRAPS[3]) {
-//
-//			printf("I/O 2 request\n");
-//
-//			trapServiceHandler(2);
-//
-//			printf("waitQueue2 current state: %s\n", fifoQueueToString(waitQueue2));
-//			printf("Currently running process: %s\n\n", PCBToString(currProcess));
-//		}
-/********-Tabi**********/
 
 		//at end
 		simCounter++;
