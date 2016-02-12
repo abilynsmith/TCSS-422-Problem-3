@@ -80,6 +80,26 @@ void PCBSetPC(PcbStr* pcb, unsigned int newPC) {
 	pcb->PC = newPC;
 }
 
+void PCBSetMaxPC(PcbStr* pcb, unsigned int newMaxPC) {
+	pcb->maxPC = newMaxPC;
+}
+
+void PCBSetCreation(PcbStr* pcb, unsigned int newCreation) {
+	pcb->creation = newCreation;
+}
+
+void PCBSetTermination(PcbStr* pcb, unsigned int newTermination) {
+	pcb->termination = newTermination;
+}
+
+void PCBSetTerminate(PcbStr* pcb, unsigned int newTerminate) {
+	pcb->terminate = newTerminate;
+}
+
+void PCBSetTermCount(PcbStr* pcb, unsigned int newTermCount) {
+	pcb->term_count = newTermCount;
+}
+
 /**
  * Returns PC of this PCB.
  */
