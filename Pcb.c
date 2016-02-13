@@ -30,7 +30,7 @@ typedef struct PCB {
 	unsigned int maxPC;
 	unsigned long int creation;
 	unsigned long int termination;
-	int terminate;
+	unsigned int terminate;
 	unsigned int term_count;
 	unsigned int IO_1_Traps[NUM_IO_TRAPS];
 	unsigned int IO_2_Traps[NUM_IO_TRAPS];
@@ -131,35 +131,26 @@ unsigned int PCBGetTermCount(PcbStr* pcb) {
 	return pcb->term_count;
 }
 
-
-/**Generates a value greater or equal to min and less or equal to max*/
 /*
-int genLarger(int min, int max) {
-	//srand(time(NULL));
-	return (rand() % (max - min + 1)) + min;
-}
-*/
-
-/*
- *How it works:
- *ex if we want 8 unique values in range from 1-20, inclusive, when we generate the first value,
- *it cannot be greater than 13 or we will not have enough unique values for the next 7 integers.
- *hence, the maximum value for the 1st integer is (20-8+1), for 2nd is (20-8+2), etc. Then to generalize,
- *the ith integer (starting at i=1) can be at most (maxVal-n+i). Hence if we start at i=0, we have
- *the formula (maxVal-n+i+1)*/
-/*
-void genNUniqueValsInRange(int n, unsigned int* storage, int minVal, int maxVal) {
-
-	int i=0;
-	storage[i++] = genLarger(minVal, maxVal - n + 1);
-	for (; i <= n; i++) {
-		storage[i] = genLarger(storage[i-1], maxVal-n+i+1);
+ * Partitions (maxVal - minVal) into n non-overlapping partitions.
+ * Sets storage[i] to a random number from the corresponding partition.
+ * 
+ * Ex.: n = 8, minVal = 0, maxVal = 2000
+ * Partition Size = 250
+ * partition[0] = 0 to 249
+ * partition[1] = 250 to 499
+ * ...
+ * partition[7] = 1750 to 1999
+ */
+void genTraps(int n, unsigned int* storage, int minVal, int maxVal) {
+	int partitionSize = (maxVal - minVal) / n;	// truncate if the division results in a double
+	int i;
+	for(i = 0; i < n; i++) {
+		storage[i] = (rand() % (partitionSize)) + (i * partitionSize);
 	}
-
 }
-*/
 
-PcbPtr PCBConstructor(unsigned int startPc){
+PcbPtr PCBConstructor(){
 	PcbStr* pcb = (PcbStr*) malloc(sizeof(PcbStr));
 	pcb->PC = 0;
 	pcb->PID = 1;
@@ -173,7 +164,6 @@ PcbPtr PCBConstructor(unsigned int startPc){
 	//genIOArrays(pcb);
 
 	unsigned int* allTraps = malloc(sizeof(unsigned int) * NUM_IO_TRAPS * 2);
-	//genNUniqueValsInRange(NUM_IO_TRAPS * 2, allTraps, 0, pcb->maxPC);
 	genTraps(NUM_IO_TRAPS * 2, allTraps, 0, pcb->maxPC);
 
 	int i;
@@ -187,54 +177,6 @@ PcbPtr PCBConstructor(unsigned int startPc){
 	return pcb;
 }
 
-
-/*
- * Partitions (maxVal - minVal) into n non-overlapping partitions.
- * Sets storage[i] to a random number from the corresponding partition.
- *
- * Ex.: n = 8, minVal = 0, maxVal = 2000
- * Partition Size = 250
- * partition[0] = 0 to 249
- * partition[1] = 250 to 499
- * ...
- * partition[7] = 1750 to 1999
- */
-void genTraps(int n, unsigned int* storage, int minVal, int maxVal) {
-	int partitionSize = (maxVal - minVal) / n;	// truncate if the division results in a double
-	int i;
-
-	for(i = 0; i < n; i++) {
-		storage[i] = (rand() % (partitionSize)) + (i * partitionSize);
-	}
-}
-
-void genIOArrays(PcbPtr pcb) {
-	int quarterMax = pcb->maxPC/4;
-
-
-	pcb->IO_1_Traps[0] = rand()%quarterMax;//generate a random number that's in the first 1/4 of MAX_PC
-	pcb->IO_1_Traps[1] = rand()%quarterMax + quarterMax;//random number between 1/4-2/4 of MAX_PC
-	pcb->IO_1_Traps[2] = rand()%quarterMax + 2 * quarterMax;//random number between 2/4-3/4 of MAX_PC
-	pcb->IO_1_Traps[3] = rand()%quarterMax + 3 * quarterMax;//random number between 3/4-end of MAX_PC
-
-	pcb->IO_2_Traps[0] = rand()%quarterMax;
-	while (pcb->IO_2_Traps[0] == pcb->IO_1_Traps[0]) {//the while loops are to ensure no duplicates between the two arrays
-		pcb->IO_2_Traps[0] = rand()%quarterMax;
-	}
-	pcb->IO_2_Traps[1] = rand()%quarterMax + quarterMax;
-	while (pcb->IO_2_Traps[1] == pcb->IO_1_Traps[1]) {
-		pcb->IO_2_Traps[1] = rand()%quarterMax + quarterMax;
-	}
-	pcb->IO_2_Traps[2] = rand()%quarterMax + 2 * quarterMax;
-	while (pcb->IO_2_Traps[2] == pcb->IO_1_Traps[2]) {
-		pcb->IO_2_Traps[2] = rand()%quarterMax + 2 * quarterMax;
-	}
-	pcb->IO_2_Traps[3] = rand()%quarterMax + 3 * quarterMax;
-	while (pcb->IO_2_Traps[3] == pcb->IO_1_Traps[3]) {
-		pcb->IO_2_Traps[3] = rand()%quarterMax + 3 * quarterMax;
-	}
-
- }
 
 /**Need at most 5 chars for each 8 traps, plus 8 spaces before each, or 48*/
 char* TrapsToString(PcbStr* pcb) {
@@ -288,8 +230,6 @@ char *PCBToString(PcbStr* pcb) {
 	free(emptyStr);
 	return retString;
 }
-
-
 
 void PCBDestructor(PcbPtr pcb) {
 	free (pcb);

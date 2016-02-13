@@ -245,8 +245,8 @@ void genProcesses() {
 			PCBSetState(newProc, created);
 			fifoQueueEnqueue(newProcesses, newProc);
 
-			//printf("Process created: PID: %d at %lu\n", PCBGetID(newProc), PCBGetCreation(newProc));
-			printf("Process created: %s\n", PCBToString(newProc));
+			printf("Process created: PID: %d at %lu\n", PCBGetID(newProc), PCBGetCreation(newProc));
+			//printf("Process created: %s\n", PCBToString(newProc));
 		}
 	}
 }
@@ -269,7 +269,7 @@ void cpu() {
 				} else {
 					printf("Timer interrupt: no current process is running, ");
 				}
-
+				genProcesses();
 				timerIsr();
 			}
 
