@@ -72,10 +72,10 @@ void dispatcher() {
 		PCBSetState(currProcess, running);
 		sysStackPC = PCBGetPC(currProcess);
 
-		printf("PID %d was dispatched\n\n", PCBGetID(currProcess));
+		printf("PID %d was dispatched\r\n\r\n", PCBGetID(currProcess));
 	} else {
 		//currProcess = NULL;
-		printf("Ready queue is empty, no process dispatched\n\n");
+		printf("Ready queue is empty, no process dispatched\r\n\r\n");
 	}
 }
 
@@ -87,7 +87,7 @@ void scheduler(int interruptType) {
 		PcbPtr pcb = fifoQueueDequeue(newProcesses);
 		PCBSetState(pcb, ready);
 		fifoQueueEnqueue(readyProcesses, pcb);
-		//fprintf(outFilePtr, "%s\r\n", PCBToString(pcb));
+		//fprintf(outFilePtr, "%s\r\r\n", PCBToString(pcb));
 	}
 
 	switch (interruptType) {
@@ -103,7 +103,7 @@ void scheduler(int interruptType) {
 		PCBSetState(currProcess, terminated);
 		PCBSetTermination(currProcess, time(NULL));
 
-		printf("Process terminated: PID %d at %lu\n\n", PCBGetID(currProcess), PCBGetTermination(currProcess));
+		printf("Process terminated: PID %d at %lu\r\n\r\n", PCBGetID(currProcess), PCBGetTermination(currProcess));
 
 		dispatcher();
 		break;
@@ -181,7 +181,7 @@ void IO_ISR(int numIO) {	//IOCompletionHandler
 	//fifoQueueEnqueue(readyProcesses, currProcess);
 	PCBSetState(pcb, ready);
 
-	printf("PID %d put in ready queue\n\n", PCBGetID(pcb));
+	printf("PID %d put in ready queue\r\n\r\n", PCBGetID(pcb));
 
 	//PCBSetState(currProcess, ready);
 	//set new io waiting queue process to running
@@ -261,8 +261,8 @@ void genProcesses() {
 			PCBSetState(newProc, created);
 			fifoQueueEnqueue(newProcesses, newProc);
 
-			printf("Process created: PID: %d at %lu\n", PCBGetID(newProc), PCBGetCreation(newProc));
-			//printf("Process created: %s\n", PCBToString(newProc));
+			printf("Process created: PID: %d at %lu\r\n", PCBGetID(newProc), PCBGetCreation(newProc));
+			//printf("Process created: %s\r\n", PCBToString(newProc));
 		}
 	}
 }
@@ -270,7 +270,7 @@ void genProcesses() {
 void cpu() {
 	genProcesses();
 
-		printf("\nBegin Simulation:\n\n");
+		printf("\r\nBegin Simulation:\r\n\r\n");
 
 		int simCounter = 0;
 
@@ -316,7 +316,7 @@ void cpu() {
 			if (currProcess/*PCBGetState(currProcess) != blocked && PCBGetState(currProcess) != terminated*/
 					&& sysStackPC >= PCBGetMaxPC(currProcess)) {
 				PCBSetTermCount(currProcess, PCBGetTermCount(currProcess) + 1);
-				printf("\n");
+				printf("\r\n");
 				//if TERM_COUNT = TERMINATE, then call terminateISR to put this process in the terminated list
 				if (PCBGetTermCount(currProcess) == PCBGetTerminate(currProcess)) {
 
@@ -371,8 +371,8 @@ int main(void) {
 		PCBSetPriority(currProcess, rand() % PRIORITY_LEVELS);
 		PCBSetState(currProcess, running);
 		//fifoQueueEnqueue(newProcesses, currProcess);
-		printf("Process created: PID: %d at %lu\n", PCBGetID(currProcess), PCBGetCreation(currProcess));
-//		printf("Process created: %s\n", PCBToString(currProcess));
+		printf("Process created: PID: %d at %lu\r\n", PCBGetID(currProcess), PCBGetCreation(currProcess));
+//		printf("Process created: %s\r\n", PCBToString(currProcess));
 		cpu();
 	}
 
@@ -384,6 +384,6 @@ int main(void) {
 	IODeviceDestructor(device1);
 	IODeviceDestructor(device2);
 
-	printf("End of simulation\n");
+	printf("End of simulation\r\n");
 	return 0;
 }
