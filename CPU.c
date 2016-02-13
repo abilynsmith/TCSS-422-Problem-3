@@ -10,14 +10,10 @@
 #define IO_REQUEST 3
 #define IO_COMPLETION 4
 #define TIMER_QUANTUM 500
-//#define NEW_PROCS_LOWER 3
-//#define NEW_PROCS_UPPER 4
 #define NEW_PROCS		6
 #define PRIORITY_LEVELS 16
 #define ROUNDS_TO_PRINT 4 // the number of rounds to wait before printing simulation data
-#define SIMULATION_END 10000 //the number of instructions to execute before the simulation may end
-#define MIN_PC_INCREMENT 3000
-#define PC_INCREMENT_RANGE 1000
+#define SIMULATION_END 100000 //the number of instructions to execute before the simulation may end
 
 #define UPPER_IO_TIME_RATIO 5
 #define LOWER_IO_TIME_RATIO 3
@@ -26,6 +22,18 @@ typedef struct {
 	FifoQueue* waitQ;
 	int counter;
 } Device;
+
+Device* IODeviceConstructor() {
+	Device* device = (Device*) malloc(sizeof(Device));
+	device->waitQ = fifoQueueConstructor();
+	device->counter = -1;
+	return device;
+}
+
+void IODeviceDestructor(Device* device) {
+	fifoQueueDestructor(&device->waitQ);
+	free(device);
+}
 
 //Global variables
 int currPID; //The number of processes created so far. The latest process has this as its ID.
@@ -40,20 +48,7 @@ FifoQueue* terminatedProcesses;
 PcbPtr currProcess;
 Device* device1;
 Device* device2;
-FILE* outFilePtr;
 
-
-Device* IODeviceConstructor() {
-	Device* device = (Device*) malloc(sizeof(Device));
-	device->waitQ = fifoQueueConstructor();
-	device->counter = -1;
-	return device;
-}
-
-void IODeviceDestructor(Device* device) {
-	fifoQueueDestructor(&device->waitQ);
-	free(device);
-}
 
 /*Prepares the waiting process to be executed.*/
 void dispatcher() {
@@ -131,13 +126,15 @@ void terminateIsr() {
 	scheduler(TERMINATE_INTERRUPT);
 }
 
+
 /**If there's a process waiting for IO from this device, and the counter
  * is at 0, then resets the timer.*/
-void setIOTimer(Device* d) {
+int setIOTimer(Device* d) {
 	if (fifoQueuePeek(d->waitQ) && d->counter == 0)
 		d->counter = (rand()
 				% ((UPPER_IO_TIME_RATIO - LOWER_IO_TIME_RATIO) * TIMER_QUANTUM))
 				+ (LOWER_IO_TIME_RATIO * TIMER_QUANTUM);
+	return 0;
 }
 
 /* I was assigned a IO_ISR Method. I assume we need it to
@@ -145,8 +142,10 @@ void setIOTimer(Device* d) {
  * The interrupt service routine for a IO interrupt
  * Does it still have to save Cpu state to Pcb? */
 void IO_ISR(int numIO) {	//IOCompletionHandler
-	saveCpuToPcb();
-	PCBSetState(currProcess, interrupted);
+	if (PCBGetState(currProcess) != blocked) {
+		saveCpuToPcb();
+		PCBSetState(currProcess, interrupted);
+	}
 	//Get process from waiting queue
 	PcbPtr pcb;
 	if (numIO == 1) {
@@ -190,7 +189,6 @@ void IOTrapHandler(Device* d) {
 	scheduler(IO_COMPLETION);
 	//dispatcher();
 }
-
 
 
 //returns 0 if there's no io request, nonzero if request was made.
@@ -254,7 +252,43 @@ void genProcesses(int min) {
 	}
 }
 
+//<<<<<<< HEAD
 void cpu() {
+/*=======
+int main(void) {
+	srand(time(NULL));
+	currPID = 0;
+	sysStackPC = 0;
+	io1Count = -1;
+	io2Count = -1;
+	timerCount = TIMER_QUANTUM;
+	newProcesses = fifoQueueConstructor();
+	readyProcesses = fifoQueueConstructor();
+	terminatedProcesses = fifoQueueConstructor();
+	device1 = IODeviceConstructor();
+	device2 = IODeviceConstructor();
+
+
+	//An initial process to start with
+	currProcess = PCBConstructor();
+	if(currProcess != NULL)	// Remember to call the destructor when finished using newProc
+	{
+		PCBSetID(currProcess, currPID);
+		PCBSetPriority(currProcess, rand() % PRIORITY_LEVELS);
+		PCBSetState(currProcess, running);
+		//fifoQueueEnqueue(newProcesses, currProcess);
+		//currPID++;
+		//printf("Process created: PID: %d at %lu\n", PCBGetID(newProc), PCBGetCreation(newProc));
+		printf("Process created: %s\n", PCBToString(currProcess));
+	}
+
+	//printf("Process created: PID: %d at %lu\n", PCBGetID(currProcess), PCBGetCreation(currProcess));
+
+	genProcesses();
+
+	printf("\nBegin Simulation:\n\n");
+
+>>>>>>> origin/wingsea*/
 	int simCounter = 0;
 
 	while (simCounter <= SIMULATION_END) {
@@ -284,7 +318,7 @@ void cpu() {
 			if (PCBGetState(currProcess) != blocked) {
 				printf("I/O 1 Completion interrupt: PID %d is running, ", PCBGetID(currProcess));
 			} else {
-				printf("I/O 1 Completion interrupt: no current process is running, ");
+				printf("I/O 1 Completion interrupt: no current process is running.");
 			}
 			//call the IO service routine
 			IO_ISR(2);
@@ -302,6 +336,7 @@ void cpu() {
 			}
 			PCBSetPC(currProcess, 0);
 		}
+
 		sysStackPC++;
 
 		if (PCBGetState(currProcess) != blocked && checkIORequest(1) != 0) {
@@ -358,6 +393,8 @@ int main(void) {
 	fifoQueueDestructor(&newProcesses);
 	fifoQueueDestructor(&readyProcesses);
 	fifoQueueDestructor(&terminatedProcesses);
+
+
 	IODeviceDestructor(device1);
 	IODeviceDestructor(device2);
 
