@@ -136,8 +136,10 @@ void terminateIsr() {
  * The interrupt service routine for a IO interrupt
  * Does it still have to save Cpu state to Pcb? */
 void IO_ISR(int numIO) {	//IOCompletionHandler
-	saveCpuToPcb();
-	PCBSetState(currProcess, interrupted);
+	if (PCBGetState(currProcess) != blocked) {
+		saveCpuToPcb();
+		PCBSetState(currProcess, interrupted);
+	}
 	//Get process from waiting queue
 	PcbPtr pcb;
 	if (numIO == 1) {
@@ -307,7 +309,7 @@ int main(void) {
 			if (PCBGetState(currProcess) != blocked) {
 				printf("I/O 1 Completion interrupt: PID %d is running, ", PCBGetID(currProcess));
 			} else {
-				printf("I/O 1 Completion interrupt: no current process is running, ", PCBGetID(currProcess));
+				printf("I/O 1 Completion interrupt: no current process is running, ");
 			}
 			//call the IO service routine
 			IO_ISR(1);
