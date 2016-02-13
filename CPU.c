@@ -8,10 +8,11 @@
 #define TIMER_INTERRUPT 1
 #define TERMINATE_INTERRUPT 2
 #define IO_REQUEST 3
+#define IO_COMPLETION 4
 #define TIMER_QUANTUM 500
 //#define NEW_PROCS_LOWER 3
 //#define NEW_PROCS_UPPER 4
-#define NEW_PROCS		2
+#define NEW_PROCS		6
 #define PRIORITY_LEVELS 16
 #define ROUNDS_TO_PRINT 4 // the number of rounds to wait before printing simulation data
 #define SIMULATION_END 10000 //the number of instructions to execute before the simulation may end
@@ -60,22 +61,23 @@ void dispatcher() {
 
 		printf("PID %d was dispatched\n\n", PCBGetID(currProcess));
 	} else {
-		printf("\n\n");
+		printf("Ready queue is empty, no process dispatched\n\n");
 	}
 }
 
 //Scheduler
 void scheduler(int interruptType) {
-	switch (interruptType) {
+	//Get new processes into ready queue
 	int i;
+	for (i = 0; i < newProcesses->size; i++) {
+		PcbPtr pcb = fifoQueueDequeue(newProcesses);
+		PCBSetState(pcb, ready);
+		fifoQueueEnqueue(readyProcesses, pcb);
+		//fprintf(outFilePtr, "%s\r\n", PCBToString(pcb));
+	}
+
+	switch (interruptType) {
 	case TIMER_INTERRUPT :
-		//Get new processes into ready queue
-		for (i = 0; i < newProcesses->size; i++) {
-			PcbPtr pcb = fifoQueueDequeue(newProcesses);
-			PCBSetState(pcb, ready);
-			fifoQueueEnqueue(readyProcesses, pcb);
-			//fprintf(outFilePtr, "%s\r\n", PCBToString(pcb));
-		}
 		if (PCBGetState(currProcess) != blocked) {
 			fifoQueueEnqueue(readyProcesses, currProcess);
 			PCBSetState(currProcess, ready);
@@ -93,7 +95,14 @@ void scheduler(int interruptType) {
 		break;
 	case IO_REQUEST :
 		//set currProccess back to running
-		PCBSetState(currProcess, running);
+		if (PCBGetState(currProcess) != blocked) {
+			PCBSetState(currProcess, running);
+		} else {
+			dispatcher();
+		}
+		break;
+	case IO_COMPLETION :
+		dispatcher();
 		break;
 	default :
 		break;
@@ -133,9 +142,17 @@ void IO_ISR(int numIO) {	//IOCompletionHandler
 	PcbPtr pcb;
 	if (numIO == 1) {
 		pcb = fifoQueueDequeue(device1->waitQ);
+		if (device1->waitQ->size > 0) {
+			//reset the timer
+			setIOTimer(device1);
+		}
 	}
 	else if (numIO == 2) {
 		pcb = fifoQueueDequeue(device2->waitQ);
+		if (device2->waitQ->size > 0) {
+			//reset the timer
+			setIOTimer(device2);
+		}
 	}
 	fifoQueueEnqueue(readyProcesses, pcb);
 	//put current process into ready queue
@@ -158,9 +175,11 @@ void IOTrapHandler(Device* d) {
 
 	printf("PID %d put in waiting queue, ", PCBGetID(currProcess));
 
-	setIOTimer(d);
-	//scheduler(IO_REQUEST);
-	dispatcher();
+	if (d->waitQ->size == 1) {
+		setIOTimer(d);
+	}
+	scheduler(IO_COMPLETION);
+	//dispatcher();
 }
 
 int setIOTimer(Device* device) {
@@ -195,7 +214,7 @@ int checkIOInterrupt(Device* device) {
 	} else if (device->counter == 0) {	//we've reached the end of the waiting time, throw interrupt
 		device->counter = -1;
 		return 1;
-	} else {	//this IO device hasn't been activated yet
+	} else {	//this IO device isn't active
 		return 0;
 	}
 }
@@ -273,26 +292,37 @@ int main(void) {
 		//check for timer interrupt, if so, call timerISR()
 		if (timerCheck() == 1) {
 			//printf("Timer interrupt: PID %d was running, ", PCBGetID(currProcess));
-			printf("Timer interrupt: PID %d was running at PC %d, ", PCBGetID(currProcess), PCBGetPC(currProcess));
+			if (PCBGetState(currProcess) != blocked) {
+				printf("Timer interrupt: PID %d was running, ", PCBGetID(currProcess));
+			} else {
+				printf("Timer interrupt: no current process is running");
+			}
 
 			timerIsr();
 		}
-		/*
+
+
 		//check if there has been an IO interrupt, if so call appropriate ioISR
 		if (checkIOInterrupt(device1) == 1) {
-			printf("I/O 1 Completion interrupt: PID %d is running, ", PCBGetID(currProcess));
-
+			if (PCBGetState(currProcess) != blocked) {
+				printf("I/O 1 Completion interrupt: PID %d is running, ", PCBGetID(currProcess));
+			} else {
+				printf("I/O 1 Completion interrupt: no current process is running, ", PCBGetID(currProcess));
+			}
 			//call the IO service routine
 			IO_ISR(1);
 		}
 
 		if (checkIOInterrupt(device2) == 1) {
-			printf("I/O 2 Completion interrupt: PID %d is running, ", PCBGetID(currProcess));
-
+			if (PCBGetState(currProcess) != blocked) {
+				printf("I/O 1 Completion interrupt: PID %d is running, ", PCBGetID(currProcess));
+			} else {
+				printf("I/O 1 Completion interrupt: no current process is running, ", PCBGetID(currProcess));
+			}
 			//call the IO service routine
 			IO_ISR(2);
 		}
-
+/*
 		//check the current process's PC, if it is MAX_PC, set to 0 and increment TERM_COUNT
 		if (PCBGetPC(currProcess) == PCBGetMaxPC(currProcess)) {
 			PCBSetTermCount(currProcess, PCBGetTermCount(currProcess) + 1);
@@ -305,25 +335,27 @@ int main(void) {
 			}
 			PCBSetPC(currProcess, 0);
 		}
-		*/
+	*/
 
 		//increment the current process's PC
 		//PCBSetPC(currProcess, PCBGetPC(currProcess) + 1);
 		sysStackPC++;
 		//printf("sysStackPC:%d\n", sysStackPC);
 
-		/*call trapCheck
-		 *if yes, then call the trapHandler*/
+		//call trapCheck
+		//if yes, then call the trapHandler
 
-		if (checkIORequest(1) != 0) {
+
+		if (PCBGetState(currProcess) != blocked && checkIORequest(1) != 0) {
 			printf("I/O trap request: I/O device 1, ");
 			IOTrapHandler(device1);
 		}
 
-		if (checkIORequest(2) != 0) {
+		if (PCBGetState(currProcess) != blocked && checkIORequest(2) != 0) {
 			printf("I/O trap request: I/O device 2, ");
 			IOTrapHandler(device2);
 		}
+
 
 		//at end
 		simCounter++;
