@@ -358,3 +358,15 @@ int main(void) {
 		printf("Process created: %s\n", PCBToString(currProcess));
 		cpu();
 	}
+
+	//free all the things!
+	fifoQueueDestructor(&newProcesses);
+	fifoQueueDestructor(&readyProcesses);
+	fifoQueueDestructor(&terminatedProcesses);
+
+	IODeviceDestructor(device1);
+	IODeviceDestructor(device2);
+
+	printf("End of simulation\n");
+	return 0;
+}
