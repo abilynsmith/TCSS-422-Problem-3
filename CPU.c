@@ -295,7 +295,7 @@ int main(void) {
 			if (PCBGetState(currProcess) != blocked) {
 				printf("Timer interrupt: PID %d was running, ", PCBGetID(currProcess));
 			} else {
-				printf("Timer interrupt: no current process is running");
+				printf("Timer interrupt: no current process is running, ");
 			}
 
 			timerIsr();
