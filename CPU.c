@@ -10,19 +10,27 @@
 #define IO_REQUEST 3
 #define IO_COMPLETION 4
 #define TIMER_QUANTUM 500
-//#define NEW_PROCS_LOWER 3
-//#define NEW_PROCS_UPPER 4
 #define NEW_PROCS		6
 #define PRIORITY_LEVELS 16
 #define ROUNDS_TO_PRINT 4 // the number of rounds to wait before printing simulation data
 #define SIMULATION_END 10000 //the number of instructions to execute before the simulation may end
-#define MIN_PC_INCREMENT 3000
-#define PC_INCREMENT_RANGE 1000
 
 typedef struct {
 	FifoQueue* waitQ;
 	int counter;
 } Device;
+
+Device* IODeviceConstructor() {
+	Device* device = (Device*) malloc(sizeof(Device));
+	device->waitQ = fifoQueueConstructor();
+	device->counter = -1;
+	return device;
+}
+
+void IODeviceDestructor(Device* device) {
+	fifoQueueDestructor(&device->waitQ);
+	free(device);
+}
 
 //Global variables
 int currPID; //The number of processes created so far. The latest process has this as its ID.
@@ -37,20 +45,7 @@ FifoQueue* terminatedProcesses;
 PcbPtr currProcess;
 Device* device1;
 Device* device2;
-FILE* outFilePtr;
 
-
-Device* IODeviceConstructor() {
-	Device* device = (Device*) malloc(sizeof(Device));
-	device->waitQ = fifoQueueConstructor();
-	device->counter = -1;
-	return device;
-}
-
-void IODeviceDestructor(Device* device) {
-	fifoQueueDestructor(&device->waitQ);
-	free(device);
-}
 
 /*Prepares the waiting process to be executed.*/
 void dispatcher() {
@@ -129,7 +124,11 @@ void terminateIsr() {
 	scheduler(TERMINATE_INTERRUPT);
 }
 
+int setIOTimer(Device* device) {
+	device->counter = (rand() % 3 + 3) * TIMER_QUANTUM;
 
+	return 0;
+}
 
 /* I was assigned a IO_ISR Method. I assume we need it to
  * do something, but I dont know how relevant it is now.
@@ -182,12 +181,6 @@ void IOTrapHandler(Device* d) {
 	}
 	scheduler(IO_COMPLETION);
 	//dispatcher();
-}
-
-int setIOTimer(Device* device) {
-	device->counter = (rand() % 3 + 3) * TIMER_QUANTUM;
-
-	return 0;
 }
 
 //returns 0 if there's no io request, nonzero if request was made.
@@ -255,13 +248,11 @@ void genProcesses() {
 
 int main(void) {
 	srand(time(NULL));
-	//outFilePtr = fopen("scheduleTrace.txt", "w");
 	currPID = 0;
 	sysStackPC = 0;
 	io1Count = -1;
 	io2Count = -1;
 	timerCount = TIMER_QUANTUM;
-	//unsigned int PCRegister;
 	newProcesses = fifoQueueConstructor();
 	readyProcesses = fifoQueueConstructor();
 	terminatedProcesses = fifoQueueConstructor();
@@ -319,14 +310,14 @@ int main(void) {
 			if (PCBGetState(currProcess) != blocked) {
 				printf("I/O 1 Completion interrupt: PID %d is running, ", PCBGetID(currProcess));
 			} else {
-				printf("I/O 1 Completion interrupt: no current process is running, ", PCBGetID(currProcess));
+				printf("I/O 1 Completion interrupt: no current process is running.");
 			}
 			//call the IO service routine
 			IO_ISR(2);
 		}
-/*
+
 		//check the current process's PC, if it is MAX_PC, set to 0 and increment TERM_COUNT
-		if (PCBGetPC(currProcess) == PCBGetMaxPC(currProcess)) {
+		if (PCBGetPC(currProcess) >= PCBGetMaxPC(currProcess)) {
 			PCBSetTermCount(currProcess, PCBGetTermCount(currProcess) + 1);
 
 			//if TERM_COUNT = TERMINATE, then call terminateISR to put this process in the terminated list
@@ -337,7 +328,7 @@ int main(void) {
 			}
 			PCBSetPC(currProcess, 0);
 		}
-	*/
+	
 
 		//increment the current process's PC
 		//PCBSetPC(currProcess, PCBGetPC(currProcess) + 1);
@@ -365,23 +356,11 @@ int main(void) {
 
 	//free all the things!
 	fifoQueueDestructor(&newProcesses);
-	//free(newProcesses);
 	fifoQueueDestructor(&readyProcesses);
-	//free(readyProcesses);
 	fifoQueueDestructor(&terminatedProcesses);
-	//free(terminatedProcesses);
 
 	IODeviceDestructor(device1);
 	IODeviceDestructor(device2);
-
-	/*
-	 * newProcesses = fifoQueueConstructor();
-	 * readyProcesses = fifoQueueConstructor();
-	 * terminatedProcesses = fifoQueueConstructor();
-	 * wait_queue1 = fifoQueueConstructor();
-	 * wait_queue2 = fifoQueueConstructor();
-	 * device1 = IODeviceConstructor();
-	 * device2 = IODeviceConstructor();*/
 
 	printf("End of simulation\n");
 	return 0;

@@ -159,6 +159,26 @@ void genNUniqueValsInRange(int n, unsigned int* storage, int minVal, int maxVal)
 }
 */
 
+/*
+ * Partitions (maxVal - minVal) into n non-overlapping partitions.
+ * Sets storage[i] to a random number from the corresponding partition.
+ *
+ * Ex.: n = 8, minVal = 0, maxVal = 2000
+ * Partition Size = 250
+ * partition[0] = 0 to 249
+ * partition[1] = 250 to 499
+ * ...
+ * partition[7] = 1750 to 1999
+ */
+void genTraps(int n, unsigned int* storage, int minVal, int maxVal) {
+	int partitionSize = (maxVal - minVal) / n;	// truncate if the division results in a double
+	int i;
+
+	for(i = 0; i < n; i++) {
+		storage[i] = (rand() % (partitionSize)) + (i * partitionSize);
+	}
+}
+
 PcbPtr PCBConstructor(unsigned int startPc){
 	PcbStr* pcb = (PcbStr*) malloc(sizeof(PcbStr));
 	pcb->PC = 0;
@@ -186,55 +206,6 @@ PcbPtr PCBConstructor(unsigned int startPc){
 
 	return pcb;
 }
-
-
-/*
- * Partitions (maxVal - minVal) into n non-overlapping partitions.
- * Sets storage[i] to a random number from the corresponding partition.
- *
- * Ex.: n = 8, minVal = 0, maxVal = 2000
- * Partition Size = 250
- * partition[0] = 0 to 249
- * partition[1] = 250 to 499
- * ...
- * partition[7] = 1750 to 1999
- */
-void genTraps(int n, unsigned int* storage, int minVal, int maxVal) {
-	int partitionSize = (maxVal - minVal) / n;	// truncate if the division results in a double
-	int i;
-
-	for(i = 0; i < n; i++) {
-		storage[i] = (rand() % (partitionSize)) + (i * partitionSize);
-	}
-}
-
-void genIOArrays(PcbPtr pcb) {
-	int quarterMax = pcb->maxPC/4;
-
-
-	pcb->IO_1_Traps[0] = rand()%quarterMax;//generate a random number that's in the first 1/4 of MAX_PC
-	pcb->IO_1_Traps[1] = rand()%quarterMax + quarterMax;//random number between 1/4-2/4 of MAX_PC
-	pcb->IO_1_Traps[2] = rand()%quarterMax + 2 * quarterMax;//random number between 2/4-3/4 of MAX_PC
-	pcb->IO_1_Traps[3] = rand()%quarterMax + 3 * quarterMax;//random number between 3/4-end of MAX_PC
-
-	pcb->IO_2_Traps[0] = rand()%quarterMax;
-	while (pcb->IO_2_Traps[0] == pcb->IO_1_Traps[0]) {//the while loops are to ensure no duplicates between the two arrays
-		pcb->IO_2_Traps[0] = rand()%quarterMax;
-	}
-	pcb->IO_2_Traps[1] = rand()%quarterMax + quarterMax;
-	while (pcb->IO_2_Traps[1] == pcb->IO_1_Traps[1]) {
-		pcb->IO_2_Traps[1] = rand()%quarterMax + quarterMax;
-	}
-	pcb->IO_2_Traps[2] = rand()%quarterMax + 2 * quarterMax;
-	while (pcb->IO_2_Traps[2] == pcb->IO_1_Traps[2]) {
-		pcb->IO_2_Traps[2] = rand()%quarterMax + 2 * quarterMax;
-	}
-	pcb->IO_2_Traps[3] = rand()%quarterMax + 3 * quarterMax;
-	while (pcb->IO_2_Traps[3] == pcb->IO_1_Traps[3]) {
-		pcb->IO_2_Traps[3] = rand()%quarterMax + 3 * quarterMax;
-	}
-
- }
 
 /**Need at most 5 chars for each 8 traps, plus 8 spaces before each, or 48*/
 char* TrapsToString(PcbStr* pcb) {
