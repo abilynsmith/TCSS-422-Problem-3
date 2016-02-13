@@ -1,3 +1,19 @@
+/***********************************************************************************************
+* CPU.c
+*
+* Programming Team:
+* Sean Markus
+* Wing-Sea Poon
+* Abigail Smith
+* Tabi Stein
+*
+* Date: 1/22/16
+*
+* Description:
+* This C file implements the class and methods for the CPU.
+*
+************************************************************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -345,6 +361,7 @@ int main(void) {
 	device1 = IODeviceConstructor();
 	device2 = IODeviceConstructor();
 
+	printf("Sean Markus\r\nWing-Sea Poon\r\nAbigail Smith\r\nTabi Stein\r\n\r\n");
 
 	//An initial process to start with
 	currProcess = PCBConstructor();
