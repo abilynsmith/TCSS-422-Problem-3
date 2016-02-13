@@ -56,6 +56,7 @@ void dispatcher() {
 
 		printf("PID %d was dispatched\n\n", PCBGetID(currProcess));
 	} else {
+		//currProcess = NULL;
 		printf("Ready queue is empty, no process dispatched\n\n");
 	}
 }
@@ -73,7 +74,7 @@ void scheduler(int interruptType) {
 
 	switch (interruptType) {
 	case TIMER_INTERRUPT :
-		if (PCBGetState(currProcess) != blocked) {
+		if (PCBGetState(currProcess) != blocked && PCBGetState(currProcess) != terminated) {
 			fifoQueueEnqueue(readyProcesses, currProcess);
 			PCBSetState(currProcess, ready);
 		}
@@ -88,17 +89,17 @@ void scheduler(int interruptType) {
 
 		dispatcher();
 		break;
-	case IO_REQUEST :
-		//set currProccess back to running
-		if (PCBGetState(currProcess) != blocked) {
-			PCBSetState(currProcess, running);
-		} else {
-			dispatcher();
-		}
-		break;
-	case IO_COMPLETION :
-		dispatcher();
-		break;
+//	case IO_REQUEST :
+//		//set currProccess back to running
+//		if (PCBGetState(currProcess) != blocked) {
+//			PCBSetState(currProcess, running);
+//		} else {
+//			dispatcher();
+//		}
+//		break;
+//	case IO_COMPLETION :
+//		dispatcher();
+//		break;
 	default :
 		break;
 	}
@@ -111,7 +112,7 @@ void saveCpuToPcb() {
 
 /*The interrupt service routine for a timer interrupt.*/
 void timerIsr() {
-	if (PCBGetState(currProcess) != blocked) {
+	if (PCBGetState(currProcess) != blocked && PCBGetState(currProcess) != terminated) {
 		saveCpuToPcb();
 		PCBSetState(currProcess, interrupted);
 	}
@@ -257,7 +258,8 @@ void cpu() {
 			//check for timer interrupt, if so, call timerISR()
 			if (timerCheck() == 1) {
 				//printf("Timer interrupt: PID %d was running, ", PCBGetID(currProcess));
-				if (PCBGetState(currProcess) != blocked) {
+				if (PCBGetState(currProcess) != terminated) {
+//				if (PCBGetState(currProcess) != blocked && PCBGetState(currProcess) != terminated) {
 					printf("Timer interrupt: PID %d was running, ", PCBGetID(currProcess));
 				} else {
 					printf("Timer interrupt: no current process is running, ");
@@ -291,7 +293,7 @@ void cpu() {
 			//check the current process's PC, if it is MAX_PC, set to 0 and increment TERM_COUNT
 			if (PCBGetPC(currProcess) >= PCBGetMaxPC(currProcess)) {
 				PCBSetTermCount(currProcess, PCBGetTermCount(currProcess) + 1);
-
+				printf("\n");
 				//if TERM_COUNT = TERMINATE, then call terminateISR to put this process in the terminated list
 				if (PCBGetTermCount(currProcess) == PCBGetTerminate(currProcess)) {
 
@@ -345,10 +347,11 @@ int main(void) {
 		//currPID++;
 		//printf("Process created: PID: %d at %lu\n", PCBGetID(newProc), PCBGetCreation(newProc));
 		printf("Process created: %s\n", PCBToString(currProcess));
+		cpu();
 	}
 
 
-	cpu();
+
 	//printf("Process created: PID: %d at %lu\n", PCBGetID(currProcess), PCBGetCreation(currProcess));
 
 //	genProcesses();
