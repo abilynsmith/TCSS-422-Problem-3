@@ -264,12 +264,13 @@ void cpu() {
 			if (timerCheck() == 1) {
 				//printf("Timer interrupt: PID %d was running, ", PCBGetID(currProcess));
 //				if (PCBGetState(currProcess) != terminated) {
+				genProcesses();
 				if (currProcess/*PCBGetState(currProcess) != blocked && PCBGetState(currProcess) != terminated*/) {
 					printf("Timer interrupt: PID %d was running, ", PCBGetID(currProcess));
 				} else {
 					printf("Timer interrupt: no current process is running, ");
 				}
-				genProcesses();
+
 				timerIsr();
 			}
 
@@ -353,9 +354,8 @@ int main(void) {
 		PCBSetPriority(currProcess, rand() % PRIORITY_LEVELS);
 		PCBSetState(currProcess, running);
 		//fifoQueueEnqueue(newProcesses, currProcess);
-		//currPID++;
-		//printf("Process created: PID: %d at %lu\n", PCBGetID(newProc), PCBGetCreation(newProc));
-		printf("Process created: %s\n", PCBToString(currProcess));
+		printf("Process created: PID: %d at %lu\n", PCBGetID(currProcess), PCBGetCreation(currProcess));
+//		printf("Process created: %s\n", PCBToString(currProcess));
 		cpu();
 	}
 
