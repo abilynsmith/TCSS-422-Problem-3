@@ -37,7 +37,7 @@ typedef struct PCB {
 } PcbStr;
 
 
-unsigned int get_IO_1_Trap(PcbStr* pcb, int index) {
+unsigned int PCBGetIO1Trap(PcbStr* pcb, int index) {
 	if (index < NUM_IO_TRAPS) {
 		return pcb->IO_1_Traps[index];
 	} else {
@@ -45,7 +45,7 @@ unsigned int get_IO_1_Trap(PcbStr* pcb, int index) {
 	}
 }
 
-unsigned int get_IO_2_Trap(PcbStr* pcb, int index) {
+unsigned int PCBGetIO2Trap(PcbStr* pcb, int index) {
 	if (index < NUM_IO_TRAPS) {
 		return pcb->IO_2_Traps[index];
 	} else {
@@ -139,27 +139,24 @@ unsigned int PCBGetTermCount(PcbStr* pcb) {
 	return pcb->term_count;
 }
 
-/**Generates a value greater or equal to min and less or equal to max*/
-int genLarger(int min, int max) {
-	//srand(time(NULL));
-	return (rand() % (max - min + 1)) + min;
-}
-
 /*
- *How it works:
- *ex if we want 8 unique values in range from 1-20, inclusive, when we generate the first value,
- *it cannot be greater than 13 or we will not have enough unique values for the next 7 integers.
- *hence, the maximum value for the 1st integer is (20-8+1), for 2nd is (20-8+2), etc. Then to generalize,
- *the ith integer (starting at i=1) can be at most (maxVal-n+i). Hence if we start at i=0, we have
- *the formula (maxVal-n+i+1)*/
-void genNUniqueValsInRange(int n, unsigned int* storage, int minVal, int maxVal) {
-
-	int i=0;
-	storage[i++] = genLarger(minVal, maxVal - n + 1);
-	for (; i <= n; i++) {
-		storage[i] = genLarger(storage[i-1], maxVal-n+i+1);
+ * Partitions (maxVal - minVal) into n non-overlapping partitions.
+ * Sets storage[i] to a random number from the corresponding partition.
+ * 
+ * Ex.: n = 8, minVal = 0, maxVal = 2000
+ * Partition Size = 250
+ * partition[0] = 0 to 250
+ * partition[1] = 250 to 500
+ * ...
+ * partition[8] = 1750 to 2000
+ */
+void genTraps(int n, unsigned int* storage, int minVal, int maxVal) {
+	int partitionSize = (maxVal - minVal) / n;	// truncate if the division results in a double
+	int i;
+	
+	for(i = 0; i < n; i++) {
+		storage[i] = (rand() % (partitionSize + 1)) + (i * partitionSize);
 	}
-
 }
 
 PcbPtr PCBConstructor(unsigned int startPc){
@@ -172,7 +169,7 @@ PcbPtr PCBConstructor(unsigned int startPc){
 	pcb->maxPC = 2000;
 
 	unsigned int* allTraps = malloc(sizeof(unsigned int) * NUM_IO_TRAPS * 2);
-	genNUniqueValsInRange(NUM_IO_TRAPS * 2, allTraps, 0, pcb->maxPC);
+	genTraps(NUM_IO_TRAPS * 2, allTraps, 0, pcb->maxPC);
 
 	int i;
 	for (i = 0; i < NUM_IO_TRAPS; i++) {
