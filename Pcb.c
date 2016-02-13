@@ -145,17 +145,17 @@ unsigned int PCBGetTermCount(PcbStr* pcb) {
  * 
  * Ex.: n = 8, minVal = 0, maxVal = 2000
  * Partition Size = 250
- * partition[0] = 0 to 250
- * partition[1] = 250 to 500
+ * partition[0] = 0 to 249
+ * partition[1] = 250 to 499
  * ...
- * partition[8] = 1750 to 2000
+ * partition[7] = 1750 to 1999
  */
 void genTraps(int n, unsigned int* storage, int minVal, int maxVal) {
 	int partitionSize = (maxVal - minVal) / n;	// truncate if the division results in a double
 	int i;
 	
 	for(i = 0; i < n; i++) {
-		storage[i] = (rand() % (partitionSize + 1)) + (i * partitionSize);
+		storage[i] = (rand() % (partitionSize)) + (i * partitionSize);
 	}
 }
 
