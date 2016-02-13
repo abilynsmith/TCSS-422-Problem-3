@@ -13,7 +13,7 @@
 #define NEW_PROCS		6
 #define PRIORITY_LEVELS 16
 #define ROUNDS_TO_PRINT 4 // the number of rounds to wait before printing simulation data
-#define SIMULATION_END 10000 //the number of instructions to execute before the simulation may end
+#define SIMULATION_END 100000 //the number of instructions to execute before the simulation may end
 
 typedef struct {
 	FifoQueue* waitQ;

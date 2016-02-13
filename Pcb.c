@@ -185,7 +185,7 @@ PcbPtr PCBConstructor(unsigned int startPc){
 	pcb->priority = 1;
 	pcb->state = created;
 	pcb->creation = time(NULL);
-	pcb->maxPC = 2000;
+	pcb->maxPC = 200;
 	pcb->terminate = rand()%10;	//ranges from 0-10
 	pcb->term_count = 0;
 
