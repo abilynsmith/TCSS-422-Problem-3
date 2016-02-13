@@ -111,7 +111,7 @@ void fifoQueueEnqueue(FifoQueue *queue, PcbPtr pcb) {
 
 PcbPtr fifoQueueDequeue(FifoQueue *queue) {
 	if (queue->head == NULL) {
-		printf("Queue is empty");
+		printf("Queue is empty, ");
 		return NULL;
 	}
 	//PcbStr * ret = queue->head->content; //This ends up getting destroyed when destructing the Node holding it, so we instead make a copy.
