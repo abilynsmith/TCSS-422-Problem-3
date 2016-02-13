@@ -31,8 +31,8 @@ typedef enum {
 
 typedef struct PCB* PcbPtr;
 
-unsigned int get_IO_1_Trap(PcbPtr pcb, int index);
-unsigned int get_IO_2_Trap(PcbPtr pcb, int index);
+unsigned int PCBGetIO1Trap(PcbPtr pcb, int index);
+unsigned int PCBGetIO2Trap(PcbPtr pcb, int index);
 
 /*Returns a string value for the given state.*/
 char* StateToString(State state);
@@ -57,13 +57,13 @@ void PCBSetState(PcbPtr pcb, State newState);
  */
 void PCBSetPC(PcbPtr pcb, unsigned int newPC);
 
-void PCBSetMaxPC(PcbPtr pcb, unsigned int newMaxPC);
+//void PCBSetMaxPC(PcbPtr pcb, unsigned int newMaxPC);
 
-void PCBSetCreation(PcbPtr pcb, unsigned int newCreation);
+//void PCBSetCreation(PcbPtr pcb, unsigned int newCreation);
 
-void PCBSetTermination(PcbPtr pcb, unsigned int newTermination);
+void PCBSetTermination(PcbPtr pcb, unsigned long newTermination);
 
-void PCBSetTerminate(PcbPtr pcb, unsigned int newTerminate);
+void PCBSetTerminate(PcbPtr pcb, int newTerminate);
 
 void PCBSetTermCount(PcbPtr pcb, unsigned int newTermCount);
 
@@ -89,11 +89,11 @@ State PCBGetState(PcbPtr pcb);
 
 unsigned int PCBGetMaxPC(PcbPtr pcb);
 
-unsigned int PCBGetCreation(PcbPtr pcb);
+unsigned long PCBGetCreation(PcbPtr pcb);
 
 unsigned long PCBGetTermination(PcbPtr pcb);
 
-unsigned int PCBGetTerminate(PcbPtr pcb);
+int PCBGetTerminate(PcbPtr pcb);
 
 unsigned int PCBGetTermCount(PcbPtr pcb);
 
