@@ -80,19 +80,11 @@ void PCBSetPC(PcbStr* pcb, unsigned int newPC) {
 	pcb->PC = newPC;
 }
 
-void PCBSetMaxPC(PcbStr* pcb, unsigned int newMaxPC) {
-	pcb->maxPC = newMaxPC;
-}
-
-void PCBSetCreation(PcbStr* pcb, unsigned int newCreation) {
-	pcb->creation = newCreation;
-}
-
-void PCBSetTermination(PcbStr* pcb, unsigned int newTermination) {
+void PCBSetTermination(PcbStr* pcb, unsigned long newTermination) {
 	pcb->termination = newTermination;
 }
 
-void PCBSetTerminate(PcbStr* pcb, unsigned int newTerminate) {
+void PCBSetTerminate(PcbStr* pcb, int newTerminate) {
 	pcb->terminate = newTerminate;
 }
 
@@ -123,7 +115,7 @@ unsigned int PCBGetMaxPC(PcbStr* pcb) {
 	return pcb->maxPC;
 }
 
-unsigned int PCBGetCreation(PcbStr* pcb) {
+unsigned long PCBGetCreation(PcbStr* pcb) {
 	return pcb->creation;
 }
 
@@ -131,7 +123,7 @@ unsigned long PCBGetTermination(PcbStr* pcb) {
 	return pcb->termination;
 }
 
-unsigned int PCBGetTerminate(PcbStr* pcb) {
+int PCBGetTerminate(PcbStr* pcb) {
 	return pcb->terminate;
 }
 
@@ -153,13 +145,12 @@ unsigned int PCBGetTermCount(PcbStr* pcb) {
 void genTraps(int n, unsigned int* storage, int minVal, int maxVal) {
 	int partitionSize = (maxVal - minVal) / n;	// truncate if the division results in a double
 	int i;
-	
 	for(i = 0; i < n; i++) {
 		storage[i] = (rand() % (partitionSize)) + (i * partitionSize);
 	}
 }
 
-PcbPtr PCBConstructor(unsigned int startPc){
+PcbPtr PCBConstructor(){
 	PcbStr* pcb = (PcbStr*) malloc(sizeof(PcbStr));
 	pcb->PC = 0;
 	pcb->PID = 1;
@@ -167,6 +158,10 @@ PcbPtr PCBConstructor(unsigned int startPc){
 	pcb->state = created;
 	pcb->creation = time(NULL);
 	pcb->maxPC = 2000;
+	pcb->terminate = rand()%10;	//ranges from 0-10
+	pcb->term_count = 0;
+
+	//genIOArrays(pcb);
 
 	unsigned int* allTraps = malloc(sizeof(unsigned int) * NUM_IO_TRAPS * 2);
 	genTraps(NUM_IO_TRAPS * 2, allTraps, 0, pcb->maxPC);
@@ -178,8 +173,10 @@ PcbPtr PCBConstructor(unsigned int startPc){
 	}
 
 	free(allTraps);
+
 	return pcb;
 }
+
 
 /**Need at most 5 chars for each 8 traps, plus 8 spaces before each, or 48*/
 char* TrapsToString(PcbStr* pcb) {
@@ -206,15 +203,26 @@ char* TrapsToString(PcbStr* pcb) {
 
 
 char *PCBToString(PcbStr* pcb) {
-	if (pcb == NULL) 
+	if (pcb == NULL)
 		return NULL;
-		
-	char * emptyStr = (char*) malloc(sizeof(char) * 200);
+
+	char * emptyStr = (char*) malloc(sizeof(char) * 1000);
 	emptyStr[199] = '\0';
 	char* stateString = StateToString(pcb->state);
 	char* trapString = TrapsToString(pcb);
-	int lenNeeded = sprintf(emptyStr, "ID: %d, Priority: %d, State: %s, PC: %d, Traps: (%s)",
-							pcb->PID, pcb->priority, stateString, pcb->PC, trapString);
+	int lenNeeded = sprintf(emptyStr, "ID: %d, Priority: %d, State: %s, PC: %d"
+			", MAX_PC %d"
+			", CREATION %lu"
+			", TERMINATE %d"
+			", TERM_COUNT %d"
+			", \n	Traps: (%s)"
+							,pcb->PID, pcb->priority, stateString, pcb->PC
+							,pcb->maxPC
+							,pcb->creation
+							,pcb->terminate
+							, pcb->term_count
+							, trapString
+							);
 	free(stateString);
 	free(trapString);
 	char * retString = (char *) malloc(sizeof(char) * lenNeeded);
@@ -222,8 +230,6 @@ char *PCBToString(PcbStr* pcb) {
 	free(emptyStr);
 	return retString;
 }
-
-
 
 void PCBDestructor(PcbPtr pcb) {
 	free (pcb);
